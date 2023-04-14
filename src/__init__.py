@@ -68,8 +68,10 @@ def get_config_data() -> ConfigData:
 	return untyped_data
 
 def init():
+
 	if os.path.exists(CONFIG_PATH):
 		raise ValueError("boot clt is already initialized at boot.toml")
+		
 	file = open(CONFIG_PATH, "w")
 	file.write(toml.dumps(CONFIG_DATA_TEMPLATE))
 	file.close()
