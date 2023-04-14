@@ -1,1 +1,1 @@
-# py-clt-template
+generates a script to boot the various modules in a game
