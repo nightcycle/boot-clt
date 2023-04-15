@@ -1,5 +1,5 @@
 altgraph==0.17.3
-luau==0.2.2
+luau==0.2.5
 pefile==2023.2.7
 pyinstaller==5.10.1
 pyinstaller-hooks-contrib==2023.2
