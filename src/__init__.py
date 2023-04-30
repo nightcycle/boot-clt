@@ -1,12 +1,11 @@
 import os
 import sys
 import toml
-import json
+import multiprocessing
 import luau.roblox.util as ro_util
 import luau.path as luau_path
 import luau.roblox as roblox
 import luau.roblox.rojo as rojo
-from luau.convert import from_dict_to_type
 from luau import indent_block
 from typing import TypedDict, Literal, Any
 
@@ -138,5 +137,7 @@ def main():
 	else:
 		raise ValueError("not a known tag")
 
-
-main()
+# prevent from running twice
+if __name__ == '__main__':
+	multiprocessing.freeze_support()
+	main()		
