@@ -59,6 +59,15 @@ class BuildConfig(TypedDict):
 class ConfigData(TypedDict):
 	boot_order: list[BuildConfig]
 
+
+def get_package_zip_path() -> str:
+	base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+	print(base_path)
+	for sub_path in os.listdir(base_path):
+		print(sub_path)
+
+	return os.path.join(base_path, "data\\Packages.zip")
+
 def get_config_data() -> ConfigData:
 	file = open(CONFIG_PATH, "r")
 	untyped_data: Any = toml.loads(file.read())
@@ -123,7 +132,7 @@ def boot_domain() -> None:
 				contents += block_contents
 				contents.append("maid:GiveTask(script.Destroying:Connect(function() maid:Destroy() end))")
 
-			roblox.write_script(build_path, "\n".join(contents))
+			roblox.write_script(build_path, "\n".join(contents), get_package_zip_path())
 
 	return None
 
