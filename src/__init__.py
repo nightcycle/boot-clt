@@ -60,13 +60,17 @@ class ConfigData(TypedDict):
 	boot_order: list[BuildConfig]
 
 
-def get_package_zip_path() -> str:
+def get_package_zip_path(is_verbose: bool) -> str:
 	base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-	# print(base_path)
+	# print("\nBASE", base_path)
 	# for sub_path in os.listdir(base_path):
 	# 	print(sub_path)
 
-	return os.path.join(base_path, "data\\Packages.zip")
+	zip_path = os.path.join(base_path, "data\\Packages.zip").replace("\\", "/")
+	assert os.path.exists(zip_path), f"package zip path {zip_path} does not exist"
+	if is_verbose:
+		print(f"zip package exists: {zip_path}", os.path.exists(zip_path))
+	return zip_path
 
 def get_config_data() -> ConfigData:
 	file = open(CONFIG_PATH, "r")
@@ -82,15 +86,19 @@ def init():
 	file.write(toml.dumps(CONFIG_DATA_TEMPLATE))
 	file.close()
 
-def boot_domain() -> None:
-	rojo.get_rojo_project_path()
-	assert os.path.exists("wally.toml"), "boot clt requires wally"
-	assert os.path.exists("foreman.toml") or os.path.exists("aftman.toml"), "boot clt requires foreman or aftman"
+def boot_domain(is_verbose: bool) -> None:
+	if is_verbose:
+		print("building boot scripts")
+
 	config_data: ConfigData = get_config_data()
 	config_data_list = config_data["boot_order"]
 
 	for i, current_build_config in enumerate(config_data_list):
 		if "build_path" in current_build_config and current_build_config["build_path"] != None:
+			
+			if is_verbose:
+				build_path = current_build_config["build_path"]
+				print(f"writing {build_path}")
 			builds: list[BuildConfig] = []
 			if i > 0: 
 				for pre_config in config_data_list[0:(i-1)]:
@@ -122,25 +130,34 @@ def boot_domain() -> None:
 			luau_path.remove_all_path_variants(build_path)
 
 			if luau_path.get_if_module_script(build_path):
+				if is_verbose:
+					print("writing as module script")
 				contents.append("return function(maid: Maid): nil")
 				contents += indent_block(block_contents, indent_count=1)
 				contents.append("\tmaid:GiveTask(script.Destroying:Connect(function() maid:Destroy() end))")
 				contents.append("\treturn nil")
 				contents.append("end")
 			else:
+				if is_verbose:
+					print("writing as non-module script")
 				contents.append(f"local maid = Maid.new()")
 				contents += block_contents
 				contents.append("maid:GiveTask(script.Destroying:Connect(function() maid:Destroy() end))")
 
-			roblox.write_script(build_path, "\n".join(contents), get_package_zip_path())
+			roblox.write_script(
+				build_path, 
+				"\n".join(contents), 
+				packages_dir_zip_file_path=get_package_zip_path(is_verbose), 
+				skip_source_map=True
+			)
 
 	return None
 
 def main():
 	assert len(sys.argv) > 1, "no argument provided"
-
+	is_verbose = "-verbose" in sys.argv
 	if sys.argv[1] == BUILD_TAG:
-		boot_domain()
+		boot_domain(is_verbose)
 	elif sys.argv[1] == INIT_TAG:
 		init()
 	else:
